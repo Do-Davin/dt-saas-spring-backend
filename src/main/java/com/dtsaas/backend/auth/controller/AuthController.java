@@ -1,6 +1,6 @@
 package com.dtsaas.backend.auth.controller;
 
-import com.dtsaas.backend.auth.dto.AuthOwnerResponse;
+import com.dtsaas.backend.auth.dto.AuthResponse;
 import com.dtsaas.backend.auth.dto.LoginRequest;
 import com.dtsaas.backend.auth.dto.RegisterRequest;
 import com.dtsaas.backend.auth.service.AuthService;
@@ -22,13 +22,13 @@ public class AuthController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public AuthOwnerResponse register(@Valid @RequestBody RegisterRequest request) {
+    public AuthResponse register(@Valid @RequestBody RegisterRequest request) {
         return authService.register(request);
     }
 
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
-    public AuthOwnerResponse login(@Valid @RequestBody LoginRequest request) {
+    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
     }
 }

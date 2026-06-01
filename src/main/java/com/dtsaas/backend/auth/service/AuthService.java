@@ -1,11 +1,13 @@
 package com.dtsaas.backend.auth.service;
 
 import com.dtsaas.backend.auth.dto.AuthOwnerResponse;
+import com.dtsaas.backend.auth.dto.AuthResponse;
 import com.dtsaas.backend.auth.dto.LoginRequest;
 import com.dtsaas.backend.auth.dto.RegisterRequest;
 import com.dtsaas.backend.auth.entity.Owner;
 import com.dtsaas.backend.auth.repository.OwnerRepository;
 import com.dtsaas.backend.common.exception.ApiException;
+import com.dtsaas.backend.common.security.JwtService;
 import com.dtsaas.backend.common.security.PasswordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,9 +21,10 @@ public class AuthService {
 
     private final OwnerRepository ownerRepository;
     private final PasswordService passwordService;
+    private final JwtService jwtService;
 
     @Transactional
-    public AuthOwnerResponse register(RegisterRequest request) {
+    public AuthResponse register(RegisterRequest request) {
         if (ownerRepository.existsByEmail(request.email())) {
             throw ApiException.conflict("Email already registered");
         }
@@ -31,11 +34,11 @@ public class AuthService {
                 passwordService.hash(request.password()),
                 request.name());
 
-        return AuthOwnerResponse.from(ownerRepository.save(owner));
+        return toAuthResponse(ownerRepository.save(owner));
     }
 
     @Transactional(readOnly = true)
-    public AuthOwnerResponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request) {
         Owner owner = ownerRepository.findByEmail(request.email())
                 .orElseThrow(() -> ApiException.unauthorized(INVALID_CREDENTIALS));
 
@@ -43,6 +46,11 @@ public class AuthService {
             throw ApiException.unauthorized(INVALID_CREDENTIALS);
         }
 
-        return AuthOwnerResponse.from(owner);
+        return toAuthResponse(owner);
+    }
+
+    private AuthResponse toAuthResponse(Owner owner) {
+        String token = jwtService.generate(owner.getId(), owner.getEmail(), owner.getName());
+        return new AuthResponse(AuthOwnerResponse.from(owner), token);
     }
 }

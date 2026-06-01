@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -36,5 +37,13 @@ public class BusinessService {
                 request.catalogMode());
 
         return BusinessResponse.from(businessRepository.save(business));
+    }
+
+    @Transactional(readOnly = true)
+    public List<BusinessResponse> listForOwner(UUID ownerId) {
+        return businessRepository.findAllByOwnerIdOrderByCreatedAtDesc(ownerId)
+                .stream()
+                .map(BusinessResponse::from)
+                .toList();
     }
 }

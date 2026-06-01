@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: dt-saas-spring-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5434}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-dt_saas_spring}
+      POSTGRES_USER: ${POSTGRES_USER:-dt_saas_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dt_saas_password}
+    volumes:
+      - dt_saas_spring_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  dt_saas_spring_postgres_data:

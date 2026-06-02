@@ -14,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -59,6 +60,15 @@ public class GlobalExceptionHandler {
         ApiErrorResponse body = ApiErrorResponse.of(
                 HttpStatus.BAD_REQUEST.value(),
                 "Validation failed",
+                request.getRequestURI());
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiErrorResponse> handleMaxUploadSize(MaxUploadSizeExceededException ex, HttpServletRequest request) {
+        ApiErrorResponse body = ApiErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                "File exceeds the 5 MB limit",
                 request.getRequestURI());
         return ResponseEntity.badRequest().body(body);
     }

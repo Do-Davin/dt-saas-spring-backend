@@ -11,7 +11,11 @@ public interface BranchRepository extends JpaRepository<Branch, UUID> {
 
     Optional<Branch> findByIdAndBusinessId(UUID id, UUID businessId);
 
+    Optional<Branch> findByBusinessIdAndSlug(UUID businessId, String slug);
+
     List<Branch> findAllByBusinessIdOrderByCreatedAtDesc(UUID businessId);
+
+    List<Branch> findAllByBusinessIdOrderByNameAsc(UUID businessId);
 
     boolean existsByBusinessIdAndSlug(UUID businessId, String slug);
 

@@ -11,6 +11,8 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
 
     boolean existsBySlug(String slug);
 
+    Optional<Business> findBySlug(String slug);
+
     Optional<Business> findByIdAndOwnerId(UUID id, UUID ownerId);
 
     List<Business> findAllByOwnerIdOrderByCreatedAtDesc(UUID ownerId);

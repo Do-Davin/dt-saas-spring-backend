@@ -15,6 +15,10 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     List<Category> findAllByBusinessIdAndBranchIdOrderByPositionAscCreatedAtDesc(UUID businessId, UUID branchId);
 
+    List<Category> findAllByBusinessIdAndIsActiveTrueOrderByPositionAscNameAsc(UUID businessId);
+
+    List<Category> findAllByBusinessIdAndBranchIdAndIsActiveTrueOrderByPositionAscNameAsc(UUID businessId, UUID branchId);
+
     boolean existsByBusinessId(UUID businessId);
 
     boolean existsByBranchId(UUID branchId);

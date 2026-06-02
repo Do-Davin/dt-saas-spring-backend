@@ -9,6 +9,7 @@ import com.dtsaas.backend.categories.repository.CategoryRepository;
 import com.dtsaas.backend.common.exception.ApiException;
 import com.dtsaas.backend.products.dto.CreateProductRequest;
 import com.dtsaas.backend.products.dto.ProductResponse;
+import com.dtsaas.backend.products.dto.UpdateProductRequest;
 import com.dtsaas.backend.products.entity.PricingType;
 import com.dtsaas.backend.products.entity.Product;
 import com.dtsaas.backend.products.entity.UnitOfMeasure;
@@ -19,6 +20,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -101,6 +103,80 @@ public class ProductService {
                 .stream()
                 .map(ProductResponse::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ProductResponse getOne(UUID businessId, UUID productId, UUID ownerId) {
+        businessService.requireOwnedBusiness(businessId, ownerId);
+        return ProductResponse.from(requireOwnedProduct(businessId, productId));
+    }
+
+    @Transactional
+    public ProductResponse update(UUID businessId, UUID productId, UUID ownerId, UpdateProductRequest request) {
+        businessService.requireOwnedBusiness(businessId, ownerId);
+        Product product = requireOwnedProduct(businessId, productId);
+
+        Branch branch = null;
+        if (request.branchId() != null) {
+            branch = branchRepository.findByIdAndBusinessId(request.branchId(), businessId)
+                    .orElseThrow(() -> ApiException.notFound("Branch not found in this business"));
+        }
+
+        Category updatedCategory = null;
+        if (request.categoryId() != null) {
+            updatedCategory = categoryRepository.findByIdAndBusinessId(request.categoryId(), businessId)
+                    .orElseThrow(() -> ApiException.notFound("Category not found in this business"));
+        }
+
+        // Compute the post-patch state to validate branch-category compatibility
+        UUID finalBranchId = request.branchId() != null ? request.branchId()
+                : (product.getBranch() != null ? product.getBranch().getId() : null);
+        UUID finalCategoryId = request.categoryId() != null ? request.categoryId()
+                : (product.getCategory() != null ? product.getCategory().getId() : null);
+
+        if (finalBranchId != null && finalCategoryId != null) {
+            Category categoryToCheck = updatedCategory != null ? updatedCategory
+                    : categoryRepository.findByIdAndBusinessId(finalCategoryId, businessId)
+                            .orElseThrow(() -> ApiException.notFound("Category not found in this business"));
+            Branch categoryBranch = categoryToCheck.getBranch();
+            if (categoryBranch != null && !categoryBranch.getId().equals(finalBranchId)) {
+                throw ApiException.badRequest(
+                        "Category belongs to a different branch. Use a business-level category or match the branch.");
+            }
+        }
+
+        if (request.name() != null) product.setName(request.name());
+        if (request.nameKm() != null) product.setNameKm(request.nameKm());
+        if (request.description() != null) product.setDescription(request.description());
+        if (request.descriptionKm() != null) product.setDescriptionKm(request.descriptionKm());
+        if (request.branchId() != null) product.setBranch(branch);
+        if (request.categoryId() != null) product.setCategory(updatedCategory);
+        if (request.purchasePrice() != null) product.setPurchasePrice(request.purchasePrice());
+        if (request.salesPrice() != null) product.setSalesPrice(request.salesPrice());
+        if (request.discount() != null) product.setDiscount(request.discount());
+        if (request.pricingType() != null) product.setPricingType(request.pricingType());
+        if (request.label() != null) product.setLabel(request.label());
+        if (request.uom() != null) product.setUom(request.uom());
+        if (request.toppings() != null) product.setToppings(request.toppings());
+        if (request.ingredients() != null) product.setIngredients(request.ingredients());
+        if (request.isAvailable() != null) product.setAvailable(request.isAvailable());
+        if (request.isVisible() != null) product.setVisible(request.isVisible());
+
+        return ProductResponse.from(product);
+    }
+
+    @Transactional
+    public void delete(UUID businessId, UUID productId, UUID ownerId) {
+        businessService.requireOwnedBusiness(businessId, ownerId);
+        Product product = requireOwnedProduct(businessId, productId);
+        product.setDeletedAt(Instant.now());
+    }
+
+    // ─── Private helpers ──────────────────────────────────────────────────────
+
+    private Product requireOwnedProduct(UUID businessId, UUID productId) {
+        return productRepository.findByIdAndBusinessIdAndDeletedAtIsNull(productId, businessId)
+                .orElseThrow(() -> ApiException.notFound("Product not found"));
     }
 
     // ─── Specifications ───────────────────────────────────────────────────────

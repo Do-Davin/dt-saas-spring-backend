@@ -4,6 +4,7 @@ import com.dtsaas.backend.businesses.service.BusinessService;
 import com.dtsaas.backend.common.exception.ApiException;
 import com.dtsaas.backend.common.storage.StorageService;
 import com.dtsaas.backend.productimages.dto.ProductImageResponse;
+import com.dtsaas.backend.productimages.dto.UpdateProductImageRequest;
 import com.dtsaas.backend.productimages.entity.ProductImage;
 import com.dtsaas.backend.productimages.repository.ProductImageRepository;
 import com.dtsaas.backend.products.entity.Product;
@@ -107,8 +108,42 @@ public class ProductImageService {
                     .ifPresent(next -> next.setPrimary(true));
         }
 
-        // Best-effort storage cleanup — matches NestJS `.catch(() => undefined)` behavior
         try { storageService.deleteObject(key); } catch (Exception ignored) {}
+    }
+
+    @Transactional
+    public ProductImageResponse update(UUID businessId, UUID productId, UUID imageId, UUID ownerId,
+                                       UpdateProductImageRequest request) {
+        if (request.alt() == null && request.position() == null) {
+            throw ApiException.badRequest("At least one field must be provided");
+        }
+
+        businessService.requireOwnedBusiness(businessId, ownerId);
+        requireProduct(businessId, productId);
+
+        ProductImage image = productImageRepository.findByIdAndProductId(imageId, productId)
+                .orElseThrow(() -> ApiException.notFound("Image not found"));
+
+        if (request.alt() != null) image.setAlt(request.alt());
+        if (request.position() != null) image.setPosition(request.position());
+
+        return ProductImageResponse.from(image);
+    }
+
+    @Transactional
+    public ProductImageResponse setPrimary(UUID businessId, UUID productId, UUID imageId, UUID ownerId) {
+        businessService.requireOwnedBusiness(businessId, ownerId);
+        requireProduct(businessId, productId);
+
+        productImageRepository.findByIdAndProductId(imageId, productId)
+                .orElseThrow(() -> ApiException.notFound("Image not found"));
+
+        productImageRepository.demotePrimaries(productId);
+        productImageRepository.promoteImageById(imageId); // clearAutomatically=true → L1 cache cleared
+
+        return ProductImageResponse.from(
+                productImageRepository.findByIdAndProductId(imageId, productId)
+                        .orElseThrow(() -> ApiException.notFound("Image not found")));
     }
 
     // ─── Private helpers ──────────────────────────────────────────────────────

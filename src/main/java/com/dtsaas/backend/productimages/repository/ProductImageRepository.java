@@ -25,4 +25,10 @@ public interface ProductImageRepository extends JpaRepository<ProductImage, UUID
     @Modifying
     @Query("UPDATE ProductImage pi SET pi.isPrimary = false WHERE pi.product.id = :productId AND pi.isPrimary = true")
     void demotePrimaries(@Param("productId") UUID productId);
+
+    // clearAutomatically ensures the L1 cache is cleared after the bulk UPDATE so
+    // a subsequent findByIdAndProductId always reads the committed state from DB.
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE ProductImage pi SET pi.isPrimary = true WHERE pi.id = :imageId")
+    void promoteImageById(@Param("imageId") UUID imageId);
 }

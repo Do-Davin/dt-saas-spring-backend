@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -75,6 +76,42 @@ public class ProductImageService {
             throw e;
         }
     }
+
+    @Transactional(readOnly = true)
+    public List<ProductImageResponse> list(UUID businessId, UUID productId, UUID ownerId) {
+        businessService.requireOwnedBusiness(businessId, ownerId);
+        requireProduct(businessId, productId);
+
+        return productImageRepository
+                .findAllByProductIdOrderByPositionAscCreatedAtAsc(productId)
+                .stream()
+                .map(ProductImageResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public void delete(UUID businessId, UUID productId, UUID imageId, UUID ownerId) {
+        businessService.requireOwnedBusiness(businessId, ownerId);
+        requireProduct(businessId, productId);
+
+        ProductImage image = productImageRepository.findByIdAndProductId(imageId, productId)
+                .orElseThrow(() -> ApiException.notFound("Image not found"));
+
+        String key = image.getObjectKey();
+        boolean wasPrimary = image.isPrimary();
+
+        productImageRepository.delete(image);
+
+        if (wasPrimary) {
+            productImageRepository.findFirstByProductIdOrderByPositionAscCreatedAtAsc(productId)
+                    .ifPresent(next -> next.setPrimary(true));
+        }
+
+        // Best-effort storage cleanup — matches NestJS `.catch(() => undefined)` behavior
+        try { storageService.deleteObject(key); } catch (Exception ignored) {}
+    }
+
+    // ─── Private helpers ──────────────────────────────────────────────────────
 
     private Product requireProduct(UUID businessId, UUID productId) {
         return productRepository.findByIdAndBusinessIdAndDeletedAtIsNull(productId, businessId)

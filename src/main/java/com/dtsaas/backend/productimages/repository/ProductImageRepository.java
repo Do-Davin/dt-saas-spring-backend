@@ -20,6 +20,8 @@ public interface ProductImageRepository extends JpaRepository<ProductImage, UUID
 
     boolean existsByProductId(UUID productId);
 
+    Optional<ProductImage> findFirstByProductIdOrderByPositionAscCreatedAtAsc(UUID productId);
+
     @Modifying
     @Query("UPDATE ProductImage pi SET pi.isPrimary = false WHERE pi.product.id = :productId AND pi.isPrimary = true")
     void demotePrimaries(@Param("productId") UUID productId);

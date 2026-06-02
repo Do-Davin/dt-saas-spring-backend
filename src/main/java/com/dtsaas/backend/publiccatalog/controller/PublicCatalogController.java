@@ -3,7 +3,9 @@ package com.dtsaas.backend.publiccatalog.controller;
 import com.dtsaas.backend.common.exception.ApiException;
 import com.dtsaas.backend.publiccatalog.dto.PublicBusinessResponse;
 import com.dtsaas.backend.publiccatalog.dto.PublicCatalogResponse;
+import com.dtsaas.backend.publiccatalog.dto.PublicProductDetailResponse;
 import com.dtsaas.backend.publiccatalog.dto.PublicProductPageResponse;
+import com.dtsaas.backend.publiccatalog.dto.PublicProductResponse;
 import com.dtsaas.backend.publiccatalog.service.PublicCatalogQueryService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -52,5 +54,16 @@ public class PublicCatalogController {
 
         return catalogQueryService.findPublicProducts(
                 business.id(), branchId, branchSlug, categoryId, search, page, limit);
+    }
+
+    @GetMapping("/{businessSlug}/products/{productId}")
+    public PublicProductDetailResponse getBusinessProduct(
+            @PathVariable String businessSlug,
+            @PathVariable UUID productId) {
+        PublicBusinessResponse business = catalogQueryService.findPublicBusiness(businessSlug)
+                .orElseThrow(() -> ApiException.notFound("Business not found"));
+        PublicProductResponse product = catalogQueryService.findPublicProduct(business.id(), productId)
+                .orElseThrow(() -> ApiException.notFound("Product not found"));
+        return new PublicProductDetailResponse(product);
     }
 }

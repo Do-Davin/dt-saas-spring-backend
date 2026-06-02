@@ -12,6 +12,7 @@ import com.dtsaas.backend.customerrequests.dto.OwnerRequestDetailResponse;
 import com.dtsaas.backend.customerrequests.dto.OwnerRequestListItemResponse;
 import com.dtsaas.backend.customerrequests.dto.OwnerRequestPageResponse;
 import com.dtsaas.backend.customerrequests.dto.PublicRequestResponse;
+import com.dtsaas.backend.customerrequests.dto.UpdateCustomerRequestStatusRequest;
 import com.dtsaas.backend.customerrequests.entity.CustomerRequest;
 import com.dtsaas.backend.customerrequests.entity.CustomerRequestItem;
 import com.dtsaas.backend.customerrequests.entity.RequestStatus;
@@ -110,6 +111,30 @@ public class CustomerRequestService {
                 .orElseThrow(() -> ApiException.notFound("Request not found"));
 
         return OwnerRequestDetailResponse.from(request);
+    }
+
+    // ─── Owner: status update ─────────────────────────────────────────────────
+
+    @Transactional
+    public OwnerRequestDetailResponse updateStatusForOwner(UUID businessId, UUID requestId,
+            UUID ownerId,
+            UpdateCustomerRequestStatusRequest dto) {
+        businessService.requireOwnedBusiness(businessId, ownerId);
+
+        CustomerRequest request = customerRequestRepository.findByIdAndBusinessId(requestId, businessId)
+                .orElseThrow(() -> ApiException.notFound("Request not found"));
+
+        if (request.getStatus() == dto.status()) {
+            return OwnerRequestDetailResponse.from(request);
+        }
+
+        if (!request.getStatus().canTransitionTo(dto.status())) {
+            throw ApiException.badRequest(
+                    "Cannot transition from " + request.getStatus() + " to " + dto.status());
+        }
+
+        request.setStatus(dto.status());
+        return OwnerRequestDetailResponse.from(customerRequestRepository.save(request));
     }
 
     // ─── Private helpers ──────────────────────────────────────────────────────

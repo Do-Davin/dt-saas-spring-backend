@@ -15,4 +15,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
     Optional<Product> findByIdAndBusinessIdAndDeletedAtIsNullAndIsVisibleTrue(UUID id, UUID businessId);
 
     List<Product> findAllByBusinessIdAndDeletedAtIsNullOrderByCreatedAtDesc(UUID businessId);
+
+    boolean existsByBusinessId(UUID businessId);
 }

@@ -11,4 +11,6 @@ public interface CustomerRequestRepository
         extends JpaRepository<CustomerRequest, UUID>, JpaSpecificationExecutor<CustomerRequest> {
 
     Optional<CustomerRequest> findByIdAndBusinessId(UUID id, UUID businessId);
+
+    boolean existsByBusinessId(UUID businessId);
 }

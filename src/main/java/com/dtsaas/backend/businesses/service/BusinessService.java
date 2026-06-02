@@ -10,6 +10,8 @@ import com.dtsaas.backend.businesses.entity.Business;
 import com.dtsaas.backend.businesses.repository.BusinessRepository;
 import com.dtsaas.backend.categories.repository.CategoryRepository;
 import com.dtsaas.backend.common.exception.ApiException;
+import com.dtsaas.backend.customerrequests.repository.CustomerRequestRepository;
+import com.dtsaas.backend.products.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,8 @@ public class BusinessService {
     private final OwnerRepository ownerRepository;
     private final BranchRepository branchRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
+    private final CustomerRequestRepository customerRequestRepository;
 
     @Transactional
     public BusinessResponse create(UUID ownerId, CreateBusinessRequest request) {
@@ -86,9 +90,11 @@ public class BusinessService {
     public void delete(UUID businessId, UUID ownerId) {
         Business business = requireOwnedBusiness(businessId, ownerId);
         if (branchRepository.existsByBusinessId(businessId)
-                || categoryRepository.existsByBusinessId(businessId)) {
+                || categoryRepository.existsByBusinessId(businessId)
+                || productRepository.existsByBusinessId(businessId)
+                || customerRequestRepository.existsByBusinessId(businessId)) {
             throw ApiException.conflict(
-                    "Cannot delete business with existing branches or categories. Remove them first.");
+                    "Cannot delete business with existing branches, categories, products, or requests. Remove them first.");
         }
         businessRepository.delete(business);
     }

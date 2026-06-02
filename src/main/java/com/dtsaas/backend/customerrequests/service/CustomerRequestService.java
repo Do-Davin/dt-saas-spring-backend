@@ -4,17 +4,26 @@ import com.dtsaas.backend.branches.entity.Branch;
 import com.dtsaas.backend.branches.repository.BranchRepository;
 import com.dtsaas.backend.businesses.entity.Business;
 import com.dtsaas.backend.businesses.repository.BusinessRepository;
+import com.dtsaas.backend.businesses.service.BusinessService;
 import com.dtsaas.backend.common.exception.ApiException;
 import com.dtsaas.backend.customerrequests.dto.CreateCustomerRequestItemRequest;
 import com.dtsaas.backend.customerrequests.dto.CreateCustomerRequestRequest;
+import com.dtsaas.backend.customerrequests.dto.OwnerRequestDetailResponse;
+import com.dtsaas.backend.customerrequests.dto.OwnerRequestListItemResponse;
+import com.dtsaas.backend.customerrequests.dto.OwnerRequestPageResponse;
 import com.dtsaas.backend.customerrequests.dto.PublicRequestResponse;
 import com.dtsaas.backend.customerrequests.entity.CustomerRequest;
 import com.dtsaas.backend.customerrequests.entity.CustomerRequestItem;
+import com.dtsaas.backend.customerrequests.entity.RequestStatus;
 import com.dtsaas.backend.customerrequests.entity.RequestType;
 import com.dtsaas.backend.customerrequests.repository.CustomerRequestRepository;
 import com.dtsaas.backend.products.entity.Product;
 import com.dtsaas.backend.products.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +35,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CustomerRequestService {
 
+    private final BusinessService businessService;
     private final BusinessRepository businessRepository;
     private final BranchRepository branchRepository;
     private final ProductRepository productRepository;
@@ -56,6 +66,53 @@ public class CustomerRequestService {
 
         return PublicRequestResponse.from(customerRequestRepository.save(request));
     }
+
+    // ─── Owner: list ─────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public OwnerRequestPageResponse findAllForOwner(UUID businessId, UUID ownerId,
+            int page, int limit,
+            RequestStatus status, RequestType type,
+            UUID branchId) {
+        businessService.requireOwnedBusiness(businessId, ownerId);
+
+        if (branchId != null) {
+            branchRepository.findByIdAndBusinessId(branchId, businessId)
+                    .orElseThrow(() -> ApiException.notFound("Branch not found"));
+        }
+
+        Specification<CustomerRequest> spec = Specification
+                .where(hasBusinessId(businessId))
+                .and(hasStatus(status))
+                .and(hasType(type))
+                .and(hasBranchId(branchId));
+
+        Page<CustomerRequest> resultPage = customerRequestRepository.findAll(
+                spec, PageRequest.of(page - 1, limit, Sort.by(Sort.Direction.DESC, "createdAt")));
+
+        List<OwnerRequestListItemResponse> items = resultPage.stream()
+                .map(OwnerRequestListItemResponse::from)
+                .toList();
+
+        return new OwnerRequestPageResponse(
+                items,
+                new OwnerRequestPageResponse.Pagination(
+                        page, limit, resultPage.getTotalElements(), resultPage.getTotalPages()));
+    }
+
+    // ─── Owner: detail ────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public OwnerRequestDetailResponse findOneForOwner(UUID businessId, UUID requestId, UUID ownerId) {
+        businessService.requireOwnedBusiness(businessId, ownerId);
+
+        CustomerRequest request = customerRequestRepository.findByIdAndBusinessId(requestId, businessId)
+                .orElseThrow(() -> ApiException.notFound("Request not found"));
+
+        return OwnerRequestDetailResponse.from(request);
+    }
+
+    // ─── Private helpers ──────────────────────────────────────────────────────
 
     private void assertTypeItemConstraints(RequestType type, int count) {
         if (type == RequestType.ORDER && count < 1) {
@@ -100,5 +157,27 @@ public class CustomerRequestService {
                 null,
                 dto.quantity() != null ? dto.quantity() : 1,
                 dto.note());
+    }
+
+    private static Specification<CustomerRequest> hasBusinessId(UUID businessId) {
+        return (root, query, cb) -> cb.equal(root.get("business").get("id"), businessId);
+    }
+
+    private static Specification<CustomerRequest> hasStatus(RequestStatus status) {
+        if (status == null)
+            return null;
+        return (root, query, cb) -> cb.equal(root.get("status"), status);
+    }
+
+    private static Specification<CustomerRequest> hasType(RequestType type) {
+        if (type == null)
+            return null;
+        return (root, query, cb) -> cb.equal(root.get("type"), type);
+    }
+
+    private static Specification<CustomerRequest> hasBranchId(UUID branchId) {
+        if (branchId == null)
+            return null;
+        return (root, query, cb) -> cb.equal(root.get("branch").get("id"), branchId);
     }
 }

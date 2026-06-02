@@ -14,9 +14,12 @@ import com.dtsaas.backend.products.entity.Product;
 import com.dtsaas.backend.products.entity.UnitOfMeasure;
 import com.dtsaas.backend.products.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -69,5 +72,68 @@ public class ProductService {
         product.setIngredients(request.ingredients());
 
         return ProductResponse.from(productRepository.save(product));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductResponse> list(UUID businessId, UUID ownerId,
+            UUID branchId, UUID categoryId,
+            Boolean isAvailable, Boolean isVisible) {
+        businessService.requireOwnedBusiness(businessId, ownerId);
+
+        if (branchId != null) {
+            branchRepository.findByIdAndBusinessId(branchId, businessId)
+                    .orElseThrow(() -> ApiException.notFound("Branch not found in this business"));
+        }
+        if (categoryId != null) {
+            categoryRepository.findByIdAndBusinessId(categoryId, businessId)
+                    .orElseThrow(() -> ApiException.notFound("Category not found in this business"));
+        }
+
+        Specification<Product> spec = Specification
+                .where(hasBusinessId(businessId))
+                .and(notDeleted())
+                .and(hasBranchId(branchId))
+                .and(hasCategoryId(categoryId))
+                .and(hasIsAvailable(isAvailable))
+                .and(hasIsVisible(isVisible));
+
+        return productRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
+                .stream()
+                .map(ProductResponse::from)
+                .toList();
+    }
+
+    // ─── Specifications ───────────────────────────────────────────────────────
+
+    private static Specification<Product> hasBusinessId(UUID businessId) {
+        return (root, query, cb) -> cb.equal(root.get("business").get("id"), businessId);
+    }
+
+    private static Specification<Product> notDeleted() {
+        return (root, query, cb) -> cb.isNull(root.get("deletedAt"));
+    }
+
+    private static Specification<Product> hasBranchId(UUID branchId) {
+        if (branchId == null)
+            return null;
+        return (root, query, cb) -> cb.equal(root.get("branch").get("id"), branchId);
+    }
+
+    private static Specification<Product> hasCategoryId(UUID categoryId) {
+        if (categoryId == null)
+            return null;
+        return (root, query, cb) -> cb.equal(root.get("category").get("id"), categoryId);
+    }
+
+    private static Specification<Product> hasIsAvailable(Boolean isAvailable) {
+        if (isAvailable == null)
+            return null;
+        return (root, query, cb) -> cb.equal(root.get("isAvailable"), isAvailable);
+    }
+
+    private static Specification<Product> hasIsVisible(Boolean isVisible) {
+        if (isVisible == null)
+            return null;
+        return (root, query, cb) -> cb.equal(root.get("isVisible"), isVisible);
     }
 }

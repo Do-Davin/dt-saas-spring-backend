@@ -82,10 +82,13 @@ public class PublicCatalogQueryService {
                 Specification<Product> spec = Specification
                                 .where(hasBusinessId(businessId))
                                 .and(notDeleted())
-                                .and(isVisible())
-                                .and(hasBranchId(resolvedBranchId))
-                                .and(hasCategoryId(categoryId))
-                                .and(matchesSearch(search));
+                                .and(isVisible());
+                if (resolvedBranchId != null)
+                        spec = spec.and(hasBranchId(resolvedBranchId));
+                if (categoryId != null)
+                        spec = spec.and(hasCategoryId(categoryId));
+                if (search != null && !search.isBlank())
+                        spec = spec.and(matchesSearch(search));
 
                 Page<Product> productPage = productRepository.findAll(
                                 spec,

@@ -93,11 +93,11 @@ public class ProductService {
 
         Specification<Product> spec = Specification
                 .where(hasBusinessId(businessId))
-                .and(notDeleted())
-                .and(hasBranchId(branchId))
-                .and(hasCategoryId(categoryId))
-                .and(hasIsAvailable(isAvailable))
-                .and(hasIsVisible(isVisible));
+                .and(notDeleted());
+        if (branchId != null) spec = spec.and(hasBranchId(branchId));
+        if (categoryId != null) spec = spec.and(hasCategoryId(categoryId));
+        if (isAvailable != null) spec = spec.and(hasIsAvailable(isAvailable));
+        if (isVisible != null) spec = spec.and(hasIsVisible(isVisible));
 
         return productRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
                 .stream()

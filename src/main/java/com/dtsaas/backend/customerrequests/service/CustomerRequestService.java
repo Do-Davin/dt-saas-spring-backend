@@ -83,10 +83,10 @@ public class CustomerRequestService {
         }
 
         Specification<CustomerRequest> spec = Specification
-                .where(hasBusinessId(businessId))
-                .and(hasStatus(status))
-                .and(hasType(type))
-                .and(hasBranchId(branchId));
+                .where(hasBusinessId(businessId));
+        if (status != null) spec = spec.and(hasStatus(status));
+        if (type != null) spec = spec.and(hasType(type));
+        if (branchId != null) spec = spec.and(hasBranchId(branchId));
 
         Page<CustomerRequest> resultPage = customerRequestRepository.findAll(
                 spec, PageRequest.of(page - 1, limit, Sort.by(Sort.Direction.DESC, "createdAt")));

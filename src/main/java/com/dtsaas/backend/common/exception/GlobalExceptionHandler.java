@@ -102,7 +102,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
-        log.error("Unhandled exception at {}", request.getRequestURI(), ex);
+        log.error("500 {} {} - {}: {}", request.getMethod(), request.getRequestURI(),
+                ex.getClass().getSimpleName(), ex.getMessage());
+        if (log.isDebugEnabled()) {
+            log.debug("Stack trace", ex);
+        }
         ApiErrorResponse body = ApiErrorResponse.of(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Internal server error",

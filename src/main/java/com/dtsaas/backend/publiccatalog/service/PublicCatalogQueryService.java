@@ -5,6 +5,7 @@ import com.dtsaas.backend.businesses.repository.BusinessRepository;
 import com.dtsaas.backend.categories.entity.Category;
 import com.dtsaas.backend.categories.repository.CategoryRepository;
 import com.dtsaas.backend.common.exception.ApiException;
+import com.dtsaas.backend.productimages.mapper.ProductImageMapper;
 import com.dtsaas.backend.productimages.repository.ProductImageRepository;
 import com.dtsaas.backend.products.entity.Product;
 import com.dtsaas.backend.products.repository.ProductRepository;
@@ -38,6 +39,7 @@ public class PublicCatalogQueryService {
         private final CategoryRepository categoryRepository;
         private final ProductRepository productRepository;
         private final ProductImageRepository productImageRepository;
+        private final ProductImageMapper imageMapper;
 
         public Optional<PublicBusinessResponse> findPublicBusiness(String slug) {
                 return businessRepository.findBySlug(slug)
@@ -97,7 +99,7 @@ public class PublicCatalogQueryService {
                                                 .stream()
                                                 .collect(Collectors.toMap(
                                                                 img -> img.getProduct().getId(),
-                                                                PublicProductImageResponse::from));
+                                                                imageMapper::toPublicResponse));
 
                 List<PublicProductResponse> items = productPage.stream()
                                 .map(p -> PublicProductResponse.from(p, primaryImageMap.get(p.getId()), null))
@@ -118,7 +120,7 @@ public class PublicCatalogQueryService {
                                                         .findAllByProductIdOrderByPositionAscCreatedAtAsc(
                                                                         product.getId())
                                                         .stream()
-                                                        .map(PublicProductImageResponse::from)
+                                                        .map(imageMapper::toPublicResponse)
                                                         .toList();
                                         PublicProductImageResponse primary = images.stream()
                                                         .filter(PublicProductImageResponse::isPrimary)

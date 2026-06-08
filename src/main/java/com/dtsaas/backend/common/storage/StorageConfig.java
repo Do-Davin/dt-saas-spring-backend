@@ -9,6 +9,7 @@ import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.net.URI;
 
@@ -24,6 +25,19 @@ public class StorageConfig {
                                 .credentialsProvider(StaticCredentialsProvider.create(
                                                 AwsBasicCredentials.create(props.accessKey(), props.secretKey())))
                                 .httpClientBuilder(UrlConnectionHttpClient.builder())
+                                .serviceConfiguration(S3Configuration.builder()
+                                                .pathStyleAccessEnabled(true)
+                                                .build())
+                                .build();
+        }
+
+        @Bean
+        public S3Presigner s3Presigner(StorageProperties props) {
+                return S3Presigner.builder()
+                                .endpointOverride(URI.create(props.endpoint()))
+                                .region(Region.of(props.region()))
+                                .credentialsProvider(StaticCredentialsProvider.create(
+                                                AwsBasicCredentials.create(props.accessKey(), props.secretKey())))
                                 .serviceConfiguration(S3Configuration.builder()
                                                 .pathStyleAccessEnabled(true)
                                                 .build())

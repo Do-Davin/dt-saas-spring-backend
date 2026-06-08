@@ -6,6 +6,7 @@ import com.dtsaas.backend.common.storage.StorageService;
 import com.dtsaas.backend.productimages.dto.ProductImageResponse;
 import com.dtsaas.backend.productimages.dto.UpdateProductImageRequest;
 import com.dtsaas.backend.productimages.entity.ProductImage;
+import com.dtsaas.backend.productimages.mapper.ProductImageMapper;
 import com.dtsaas.backend.productimages.repository.ProductImageRepository;
 import com.dtsaas.backend.products.entity.Product;
 import com.dtsaas.backend.products.repository.ProductRepository;
@@ -33,10 +34,11 @@ public class ProductImageService {
     private final ProductRepository productRepository;
     private final BusinessService businessService;
     private final StorageService storageService;
+    private final ProductImageMapper imageMapper;
 
     @Transactional
     public ProductImageResponse upload(UUID businessId, UUID productId, UUID ownerId,
-                                       MultipartFile file, String alt, Integer position, Boolean isPrimary) {
+            MultipartFile file, String alt, Integer position, Boolean isPrimary) {
         businessService.requireOwnedBusiness(businessId, ownerId);
         Product product = requireProduct(businessId, productId);
 
@@ -71,9 +73,12 @@ public class ProductImageService {
                     position != null ? position : 0,
                     makePrimary);
 
-            return ProductImageResponse.from(productImageRepository.save(image));
+            return imageMapper.toOwnerResponse(productImageRepository.save(image));
         } catch (RuntimeException e) {
-            try { storageService.deleteObject(key); } catch (Exception ignored) {}
+            try {
+                storageService.deleteObject(key);
+            } catch (Exception ignored) {
+            }
             throw e;
         }
     }
@@ -86,7 +91,7 @@ public class ProductImageService {
         return productImageRepository
                 .findAllByProductIdOrderByPositionAscCreatedAtAsc(productId)
                 .stream()
-                .map(ProductImageResponse::from)
+                .map(imageMapper::toOwnerResponse)
                 .toList();
     }
 
@@ -108,12 +113,15 @@ public class ProductImageService {
                     .ifPresent(next -> next.setPrimary(true));
         }
 
-        try { storageService.deleteObject(key); } catch (Exception ignored) {}
+        try {
+            storageService.deleteObject(key);
+        } catch (Exception ignored) {
+        }
     }
 
     @Transactional
     public ProductImageResponse update(UUID businessId, UUID productId, UUID imageId, UUID ownerId,
-                                       UpdateProductImageRequest request) {
+            UpdateProductImageRequest request) {
         if (request.alt() == null && request.position() == null) {
             throw ApiException.badRequest("At least one field must be provided");
         }
@@ -124,10 +132,12 @@ public class ProductImageService {
         ProductImage image = productImageRepository.findByIdAndProductId(imageId, productId)
                 .orElseThrow(() -> ApiException.notFound("Image not found"));
 
-        if (request.alt() != null) image.setAlt(request.alt());
-        if (request.position() != null) image.setPosition(request.position());
+        if (request.alt() != null)
+            image.setAlt(request.alt());
+        if (request.position() != null)
+            image.setPosition(request.position());
 
-        return ProductImageResponse.from(image);
+        return imageMapper.toOwnerResponse(image);
     }
 
     @Transactional
@@ -141,7 +151,7 @@ public class ProductImageService {
         productImageRepository.demotePrimaries(productId);
         productImageRepository.promoteImageById(imageId); // clearAutomatically=true → L1 cache cleared
 
-        return ProductImageResponse.from(
+        return imageMapper.toOwnerResponse(
                 productImageRepository.findByIdAndProductId(imageId, productId)
                         .orElseThrow(() -> ApiException.notFound("Image not found")));
     }

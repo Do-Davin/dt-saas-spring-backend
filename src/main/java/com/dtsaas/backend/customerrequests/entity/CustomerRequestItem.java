@@ -48,7 +48,7 @@ public class CustomerRequestItem {
     @Column(name = "product_name_snapshot", nullable = false)
     private String productNameSnapshot;
 
-    @Column(name = "sales_price_snapshot", precision = 10, scale = 2)
+    @Column(name = "sales_price_snapshot", precision = 12, scale = 2)
     private BigDecimal salesPriceSnapshot;
 
     @Enumerated(EnumType.STRING)
@@ -66,8 +66,8 @@ public class CustomerRequestItem {
     private Instant createdAt;
 
     public CustomerRequestItem(CustomerRequest request, Product product,
-                                String productNameSnapshot, BigDecimal salesPriceSnapshot,
-                                PricingType pricingTypeSnapshot, int quantity, String note) {
+            String productNameSnapshot, BigDecimal salesPriceSnapshot,
+            PricingType pricingTypeSnapshot, int quantity, String note) {
         this.request = request;
         this.product = product;
         this.productNameSnapshot = productNameSnapshot;

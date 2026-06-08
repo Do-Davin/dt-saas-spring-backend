@@ -11,5 +11,6 @@ public record StorageProperties(
                 @NotBlank String region,
                 @NotBlank String bucket,
                 @NotBlank String accessKey,
-                @NotBlank String secretKey) {
+                @NotBlank String secretKey,
+                boolean autoCreateBucket) {
 }

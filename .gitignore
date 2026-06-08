@@ -36,4 +36,5 @@ build/
 .vscode/
 
 .env
+.env.example
 docs/

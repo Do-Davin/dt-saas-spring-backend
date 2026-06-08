@@ -1,6 +1,7 @@
 package com.dtsaas.backend.common.exception;
 
 import com.dtsaas.backend.common.api.ApiErrorResponse;
+import com.dtsaas.backend.common.storage.StorageException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,6 +99,19 @@ public class GlobalExceptionHandler {
                 "Forbidden",
                 request.getRequestURI());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+    }
+
+    @ExceptionHandler(StorageException.class)
+    public ResponseEntity<ApiErrorResponse> handleStorage(StorageException ex, HttpServletRequest request) {
+        log.error("500 {} {} - {}", request.getMethod(), request.getRequestURI(), ex.getDetail());
+        if (log.isDebugEnabled()) {
+            log.debug("Stack trace", ex);
+        }
+        ApiErrorResponse body = ApiErrorResponse.of(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                ex.getMessage(),
+                request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 
     @ExceptionHandler(Exception.class)

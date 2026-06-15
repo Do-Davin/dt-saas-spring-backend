@@ -29,9 +29,10 @@ public record ProductResponse(
         boolean isAvailable,
         boolean isVisible,
         Instant createdAt,
-        Instant updatedAt) {
+        Instant updatedAt,
+        ProductPrimaryImageResponse primaryImage) {
 
-    public static ProductResponse from(Product product) {
+    public static ProductResponse from(Product product, ProductPrimaryImageResponse primaryImage) {
         return new ProductResponse(
                 product.getId(),
                 product.getBusiness().getId(),
@@ -52,6 +53,7 @@ public record ProductResponse(
                 product.isAvailable(),
                 product.isVisible(),
                 product.getCreatedAt(),
-                product.getUpdatedAt());
+                product.getUpdatedAt(),
+                primaryImage);
     }
 }

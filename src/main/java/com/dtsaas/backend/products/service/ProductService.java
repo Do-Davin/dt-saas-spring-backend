@@ -7,7 +7,10 @@ import com.dtsaas.backend.businesses.service.BusinessService;
 import com.dtsaas.backend.categories.entity.Category;
 import com.dtsaas.backend.categories.repository.CategoryRepository;
 import com.dtsaas.backend.common.exception.ApiException;
+import com.dtsaas.backend.productimages.mapper.ProductImageMapper;
+import com.dtsaas.backend.productimages.repository.ProductImageRepository;
 import com.dtsaas.backend.products.dto.CreateProductRequest;
+import com.dtsaas.backend.products.dto.ProductPrimaryImageResponse;
 import com.dtsaas.backend.products.dto.ProductResponse;
 import com.dtsaas.backend.products.dto.UpdateProductRequest;
 import com.dtsaas.backend.products.entity.PricingType;
@@ -22,7 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +37,8 @@ public class ProductService {
     private final BusinessService businessService;
     private final BranchRepository branchRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductImageRepository productImageRepository;
+    private final ProductImageMapper productImageMapper;
 
     @Transactional
     public ProductResponse create(UUID businessId, UUID ownerId, CreateProductRequest request) {
@@ -73,7 +80,8 @@ public class ProductService {
         product.setToppings(request.toppings());
         product.setIngredients(request.ingredients());
 
-        return ProductResponse.from(productRepository.save(product));
+        // Newly created products have no images yet.
+        return ProductResponse.from(productRepository.save(product), null);
     }
 
     @Transactional(readOnly = true)
@@ -94,21 +102,44 @@ public class ProductService {
         Specification<Product> spec = Specification
                 .where(hasBusinessId(businessId))
                 .and(notDeleted());
-        if (branchId != null) spec = spec.and(hasBranchId(branchId));
-        if (categoryId != null) spec = spec.and(hasCategoryId(categoryId));
-        if (isAvailable != null) spec = spec.and(hasIsAvailable(isAvailable));
-        if (isVisible != null) spec = spec.and(hasIsVisible(isVisible));
+        if (branchId != null)
+            spec = spec.and(hasBranchId(branchId));
+        if (categoryId != null)
+            spec = spec.and(hasCategoryId(categoryId));
+        if (isAvailable != null)
+            spec = spec.and(hasIsAvailable(isAvailable));
+        if (isVisible != null)
+            spec = spec.and(hasIsVisible(isVisible));
 
-        return productRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
-                .stream()
-                .map(ProductResponse::from)
+        List<Product> products = productRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        List<UUID> productIds = products.stream().map(Product::getId).toList();
+        Map<UUID, ProductPrimaryImageResponse> primaryImageMap = productIds.isEmpty()
+                ? Map.of()
+                : productImageRepository.findAllByProductIdInAndIsPrimaryTrue(productIds)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                img -> img.getProduct().getId(),
+                                productImageMapper::toPrimaryResponse));
+
+        return products.stream()
+                .map(p -> ProductResponse.from(p, primaryImageMap.get(p.getId())))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public ProductResponse getOne(UUID businessId, UUID productId, UUID ownerId) {
         businessService.requireOwnedBusiness(businessId, ownerId);
-        return ProductResponse.from(requireOwnedProduct(businessId, productId));
+        Product product = requireOwnedProduct(businessId, productId);
+
+        ProductPrimaryImageResponse primaryImage = productImageRepository
+                .findAllByProductIdInAndIsPrimaryTrue(List.of(productId))
+                .stream()
+                .findFirst()
+                .map(productImageMapper::toPrimaryResponse)
+                .orElse(null);
+
+        return ProductResponse.from(product, primaryImage);
     }
 
     @Transactional
@@ -145,24 +176,42 @@ public class ProductService {
             }
         }
 
-        if (request.name() != null) product.setName(request.name());
-        if (request.nameKm() != null) product.setNameKm(request.nameKm());
-        if (request.description() != null) product.setDescription(request.description());
-        if (request.descriptionKm() != null) product.setDescriptionKm(request.descriptionKm());
-        if (request.branchId() != null) product.setBranch(branch);
-        if (request.categoryId() != null) product.setCategory(updatedCategory);
-        if (request.purchasePrice() != null) product.setPurchasePrice(request.purchasePrice());
-        if (request.salesPrice() != null) product.setSalesPrice(request.salesPrice());
-        if (request.discount() != null) product.setDiscount(request.discount());
-        if (request.pricingType() != null) product.setPricingType(request.pricingType());
-        if (request.label() != null) product.setLabel(request.label());
-        if (request.uom() != null) product.setUom(request.uom());
-        if (request.toppings() != null) product.setToppings(request.toppings());
-        if (request.ingredients() != null) product.setIngredients(request.ingredients());
-        if (request.isAvailable() != null) product.setAvailable(request.isAvailable());
-        if (request.isVisible() != null) product.setVisible(request.isVisible());
+        if (request.name() != null)
+            product.setName(request.name());
+        if (request.nameKm() != null)
+            product.setNameKm(request.nameKm());
+        if (request.description() != null)
+            product.setDescription(request.description());
+        if (request.descriptionKm() != null)
+            product.setDescriptionKm(request.descriptionKm());
+        if (request.branchId() != null)
+            product.setBranch(branch);
+        if (request.categoryId() != null)
+            product.setCategory(updatedCategory);
+        if (request.purchasePrice() != null)
+            product.setPurchasePrice(request.purchasePrice());
+        if (request.salesPrice() != null)
+            product.setSalesPrice(request.salesPrice());
+        if (request.discount() != null)
+            product.setDiscount(request.discount());
+        if (request.pricingType() != null)
+            product.setPricingType(request.pricingType());
+        if (request.label() != null)
+            product.setLabel(request.label());
+        if (request.uom() != null)
+            product.setUom(request.uom());
+        if (request.toppings() != null)
+            product.setToppings(request.toppings());
+        if (request.ingredients() != null)
+            product.setIngredients(request.ingredients());
+        if (request.isAvailable() != null)
+            product.setAvailable(request.isAvailable());
+        if (request.isVisible() != null)
+            product.setVisible(request.isVisible());
 
-        return ProductResponse.from(product);
+        // Image state is managed via the dedicated image endpoints; not re-fetched
+        // here.
+        return ProductResponse.from(product, null);
     }
 
     @Transactional

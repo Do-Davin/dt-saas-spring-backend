@@ -5,6 +5,7 @@ import com.dtsaas.backend.branches.dto.CreateBranchRequest;
 import com.dtsaas.backend.branches.dto.UpdateBranchRequest;
 import com.dtsaas.backend.branches.service.BranchService;
 import com.dtsaas.backend.common.security.AuthenticatedOwner;
+import com.dtsaas.backend.common.security.RoleGuard;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -35,6 +36,7 @@ public class BranchController {
             @AuthenticationPrincipal AuthenticatedOwner owner,
             @PathVariable UUID businessId,
             @Valid @RequestBody CreateBranchRequest request) {
+        RoleGuard.requireSuperAdmin(owner);
         return branchService.create(businessId, owner.id(), request);
     }
 
@@ -42,6 +44,7 @@ public class BranchController {
     public List<BranchResponse> list(
             @AuthenticationPrincipal AuthenticatedOwner owner,
             @PathVariable UUID businessId) {
+        RoleGuard.requireSuperAdmin(owner);
         return branchService.list(businessId, owner.id());
     }
 
@@ -50,6 +53,7 @@ public class BranchController {
             @AuthenticationPrincipal AuthenticatedOwner owner,
             @PathVariable UUID businessId,
             @PathVariable UUID branchId) {
+        RoleGuard.requireSuperAdmin(owner);
         return branchService.getOne(businessId, branchId, owner.id());
     }
 
@@ -59,6 +63,7 @@ public class BranchController {
             @PathVariable UUID businessId,
             @PathVariable UUID branchId,
             @Valid @RequestBody UpdateBranchRequest request) {
+        RoleGuard.requireSuperAdmin(owner);
         return branchService.update(businessId, branchId, owner.id(), request);
     }
 
@@ -68,6 +73,7 @@ public class BranchController {
             @AuthenticationPrincipal AuthenticatedOwner owner,
             @PathVariable UUID businessId,
             @PathVariable UUID branchId) {
+        RoleGuard.requireSuperAdmin(owner);
         branchService.delete(businessId, branchId, owner.id());
     }
 }

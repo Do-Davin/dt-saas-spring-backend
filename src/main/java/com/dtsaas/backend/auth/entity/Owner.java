@@ -28,6 +28,9 @@ public class Owner extends BaseTimeEntity {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "role", nullable = false)
+    private String role = "OWNER";
+
     protected Owner() {
     }
 
@@ -63,5 +66,9 @@ public class Owner extends BaseTimeEntity {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getRole() {
+        return role;
     }
 }

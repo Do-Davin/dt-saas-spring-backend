@@ -5,6 +5,7 @@ import com.dtsaas.backend.businesses.dto.CreateBusinessRequest;
 import com.dtsaas.backend.businesses.dto.UpdateBusinessRequest;
 import com.dtsaas.backend.businesses.service.BusinessService;
 import com.dtsaas.backend.common.security.AuthenticatedOwner;
+import com.dtsaas.backend.common.security.RoleGuard;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,7 @@ public class BusinessController {
     public BusinessResponse create(
             @AuthenticationPrincipal AuthenticatedOwner owner,
             @Valid @RequestBody CreateBusinessRequest request) {
+        RoleGuard.requireSuperAdmin(owner);
         return businessService.create(owner.id(), request);
     }
 
@@ -54,6 +56,7 @@ public class BusinessController {
             @AuthenticationPrincipal AuthenticatedOwner owner,
             @PathVariable UUID businessId,
             @Valid @RequestBody UpdateBusinessRequest request) {
+        RoleGuard.requireSuperAdmin(owner);
         return businessService.update(businessId, owner.id(), request);
     }
 
@@ -62,6 +65,7 @@ public class BusinessController {
     public void delete(
             @AuthenticationPrincipal AuthenticatedOwner owner,
             @PathVariable UUID businessId) {
+        RoleGuard.requireSuperAdmin(owner);
         businessService.delete(businessId, owner.id());
     }
 }

@@ -39,9 +39,9 @@ public interface SaleItemRepository extends JpaRepository<SaleItem, UUID> {
             FROM   sale_items si
             JOIN   sales s ON si.sale_id = s.id
             WHERE  s.business_id = :businessId
-              AND  (:from     IS NULL OR s.sale_date >= :from)
-              AND  (:to       IS NULL OR s.sale_date <= :to)
-              AND  (:branchId IS NULL OR s.branch_id = :branchId)
+              AND  (CAST(:from AS timestamptz)  IS NULL OR s.sale_date >= :from)
+              AND  (CAST(:to AS timestamptz)    IS NULL OR s.sale_date <= :to)
+              AND  (CAST(:branchId AS uuid)     IS NULL OR s.branch_id = :branchId)
             GROUP  BY si.category_id_snapshot, si.category_name_snapshot
             ORDER  BY SUM(si.line_total) DESC
             """)
@@ -60,9 +60,9 @@ public interface SaleItemRepository extends JpaRepository<SaleItem, UUID> {
             FROM   sale_items si
             JOIN   sales s ON si.sale_id = s.id
             WHERE  s.business_id = :businessId
-              AND  (:from     IS NULL OR s.sale_date >= :from)
-              AND  (:to       IS NULL OR s.sale_date <= :to)
-              AND  (:branchId IS NULL OR s.branch_id = :branchId)
+              AND  (CAST(:from AS timestamptz)  IS NULL OR s.sale_date >= :from)
+              AND  (CAST(:to AS timestamptz)    IS NULL OR s.sale_date <= :to)
+              AND  (CAST(:branchId AS uuid)     IS NULL OR s.branch_id = :branchId)
             GROUP  BY si.product_id, si.product_name_snapshot
             ORDER  BY SUM(si.line_total) DESC
             """)

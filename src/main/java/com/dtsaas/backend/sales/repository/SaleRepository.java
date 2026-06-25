@@ -31,9 +31,9 @@ public interface SaleRepository extends JpaRepository<Sale, UUID>, JpaSpecificat
                    COUNT(id)                       AS saleCount
             FROM   sales
             WHERE  business_id = :businessId
-              AND  (:from     IS NULL OR sale_date >= :from)
-              AND  (:to       IS NULL OR sale_date <= :to)
-              AND  (:branchId IS NULL OR branch_id = :branchId)
+              AND  (CAST(:from AS timestamptz)  IS NULL OR sale_date >= :from)
+              AND  (CAST(:to AS timestamptz)    IS NULL OR sale_date <= :to)
+              AND  (CAST(:branchId AS uuid)     IS NULL OR branch_id = :branchId)
             """)
     SalesSummaryRow findSalesSummary(
             @Param("businessId") UUID businessId,

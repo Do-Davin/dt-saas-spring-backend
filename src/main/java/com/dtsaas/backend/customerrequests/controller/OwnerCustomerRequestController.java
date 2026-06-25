@@ -1,7 +1,6 @@
 package com.dtsaas.backend.customerrequests.controller;
 
 import com.dtsaas.backend.common.security.AuthenticatedOwner;
-import com.dtsaas.backend.common.security.RoleGuard;
 import com.dtsaas.backend.customerrequests.dto.OwnerRequestDetailResponse;
 import com.dtsaas.backend.customerrequests.dto.OwnerRequestPageResponse;
 import com.dtsaas.backend.customerrequests.dto.UpdateCustomerRequestStatusRequest;
@@ -41,7 +40,6 @@ public class OwnerCustomerRequestController {
             @RequestParam(required = false) RequestStatus status,
             @RequestParam(required = false) RequestType type,
             @RequestParam(required = false) UUID branchId) {
-        RoleGuard.requireSuperAdmin(owner);
         return customerRequestService.findAllForOwner(businessId, owner.id(), page, limit, status, type, branchId);
     }
 
@@ -50,7 +48,6 @@ public class OwnerCustomerRequestController {
             @AuthenticationPrincipal AuthenticatedOwner owner,
             @PathVariable UUID businessId,
             @PathVariable UUID requestId) {
-        RoleGuard.requireSuperAdmin(owner);
         return customerRequestService.findOneForOwner(businessId, requestId, owner.id());
     }
 
@@ -60,7 +57,6 @@ public class OwnerCustomerRequestController {
             @PathVariable UUID businessId,
             @PathVariable UUID requestId,
             @RequestBody @Valid UpdateCustomerRequestStatusRequest dto) {
-        RoleGuard.requireSuperAdmin(owner);
         return customerRequestService.updateStatusForOwner(businessId, requestId, owner.id(), dto);
     }
 }

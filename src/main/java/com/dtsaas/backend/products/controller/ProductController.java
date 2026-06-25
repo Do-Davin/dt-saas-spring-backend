@@ -1,6 +1,7 @@
 package com.dtsaas.backend.products.controller;
 
 import com.dtsaas.backend.common.security.AuthenticatedOwner;
+import com.dtsaas.backend.products.dto.AdjustStockRequest;
 import com.dtsaas.backend.products.dto.CreateProductRequest;
 import com.dtsaas.backend.products.dto.ProductResponse;
 import com.dtsaas.backend.products.dto.UpdateProductRequest;
@@ -65,6 +66,15 @@ public class ProductController {
             @PathVariable UUID productId,
             @Valid @RequestBody UpdateProductRequest request) {
         return productService.update(businessId, productId, owner.id(), request);
+    }
+
+    @PatchMapping("/{productId}/stock")
+    public ProductResponse adjustStock(
+            @AuthenticationPrincipal AuthenticatedOwner owner,
+            @PathVariable UUID businessId,
+            @PathVariable UUID productId,
+            @Valid @RequestBody AdjustStockRequest request) {
+        return productService.adjustStock(businessId, productId, owner.id(), request);
     }
 
     @DeleteMapping("/{productId}")

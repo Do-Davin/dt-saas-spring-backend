@@ -9,6 +9,7 @@ import com.dtsaas.backend.categories.repository.CategoryRepository;
 import com.dtsaas.backend.common.exception.ApiException;
 import com.dtsaas.backend.productimages.mapper.ProductImageMapper;
 import com.dtsaas.backend.productimages.repository.ProductImageRepository;
+import com.dtsaas.backend.products.dto.AdjustStockRequest;
 import com.dtsaas.backend.products.dto.CreateProductRequest;
 import com.dtsaas.backend.products.dto.ProductPrimaryImageResponse;
 import com.dtsaas.backend.products.dto.ProductResponse;
@@ -79,6 +80,10 @@ public class ProductService {
 
         product.setToppings(request.toppings());
         product.setIngredients(request.ingredients());
+        if (request.stockQuantity() != null)
+            product.setStockQuantity(request.stockQuantity());
+        if (request.lowStockThreshold() != null)
+            product.setLowStockThreshold(request.lowStockThreshold());
 
         // Newly created products have no images yet.
         return ProductResponse.from(productRepository.save(product), null);
@@ -208,6 +213,10 @@ public class ProductService {
             product.setAvailable(request.isAvailable());
         if (request.isVisible() != null)
             product.setVisible(request.isVisible());
+        if (request.stockQuantity() != null)
+            product.setStockQuantity(request.stockQuantity());
+        if (request.lowStockThreshold() != null)
+            product.setLowStockThreshold(request.lowStockThreshold());
 
         // Image state is managed via the dedicated image endpoints; not re-fetched
         // here.
@@ -219,6 +228,22 @@ public class ProductService {
         businessService.requireOwnedBusiness(businessId, ownerId);
         Product product = requireOwnedProduct(businessId, productId);
         product.setDeletedAt(Instant.now());
+    }
+
+    @Transactional
+    public ProductResponse adjustStock(UUID businessId, UUID productId, UUID ownerId, AdjustStockRequest request) {
+        businessService.requireOwnedBusiness(businessId, ownerId);
+        Product product = requireOwnedProduct(businessId, productId);
+
+        int newQuantity = product.getStockQuantity() + request.adjustment();
+        if (newQuantity < 0) {
+            throw ApiException.badRequest(
+                    "Stock cannot go below 0. Current: " + product.getStockQuantity()
+                    + ", adjustment: " + request.adjustment());
+        }
+        product.setStockQuantity(newQuantity);
+
+        return ProductResponse.from(product, null);
     }
 
     // ─── Private helpers ──────────────────────────────────────────────────────

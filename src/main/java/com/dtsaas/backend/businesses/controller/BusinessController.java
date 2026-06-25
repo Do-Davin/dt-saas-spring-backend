@@ -41,6 +41,9 @@ public class BusinessController {
 
     @GetMapping
     public List<BusinessResponse> list(@AuthenticationPrincipal AuthenticatedOwner owner) {
+        if ("SUPER_ADMIN".equals(owner.role())) {
+            return businessService.listAll();
+        }
         return businessService.listForOwner(owner.id());
     }
 
@@ -48,6 +51,9 @@ public class BusinessController {
     public BusinessResponse getOne(
             @AuthenticationPrincipal AuthenticatedOwner owner,
             @PathVariable UUID businessId) {
+        if ("SUPER_ADMIN".equals(owner.role())) {
+            return businessService.getAny(businessId);
+        }
         return businessService.getOne(businessId, owner.id());
     }
 

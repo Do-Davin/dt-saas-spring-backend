@@ -8,6 +8,7 @@ import java.util.UUID;
 public record AuthOwnerResponse(
         UUID id,
         String email,
+        String username,
         String name,
         String role,
         Instant createdAt,
@@ -17,6 +18,7 @@ public record AuthOwnerResponse(
         return new AuthOwnerResponse(
                 owner.getId(),
                 owner.getEmail(),
+                owner.getUsername(),
                 owner.getName(),
                 owner.getRole(),
                 owner.getCreatedAt(),

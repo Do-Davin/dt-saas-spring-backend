@@ -22,6 +22,9 @@ public class Owner extends BaseTimeEntity {
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 
+    @Column(name = "username", nullable = false, unique = true, length = 100)
+    private String username;
+
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
@@ -34,8 +37,9 @@ public class Owner extends BaseTimeEntity {
     protected Owner() {
     }
 
-    public Owner(String email, String passwordHash, String name) {
+    public Owner(String email, String username, String passwordHash, String name) {
         this.email = email;
+        this.username = username;
         this.passwordHash = passwordHash;
         this.name = name;
     }
@@ -48,6 +52,10 @@ public class Owner extends BaseTimeEntity {
         return email;
     }
 
+    public String getUsername() {
+        return username;
+    }
+
     public String getPasswordHash() {
         return passwordHash;
     }
@@ -56,8 +64,16 @@ public class Owner extends BaseTimeEntity {
         return name;
     }
 
+    public String getRole() {
+        return role;
+    }
+
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public void setPasswordHash(String passwordHash) {
@@ -66,9 +82,5 @@ public class Owner extends BaseTimeEntity {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getRole() {
-        return role;
     }
 }

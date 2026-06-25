@@ -18,6 +18,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -56,6 +58,36 @@ public class Business extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "catalog_mode", nullable = false)
     private CatalogMode catalogMode = CatalogMode.PRODUCT_CATALOG;
+
+    // ── Subscription fields (V17) ─────────────────────────────────────────────
+
+    @Setter
+    @Column(name = "subscription_status", nullable = false, length = 20)
+    private String subscriptionStatus = "ACTIVE";
+
+    @Setter
+    @Column(name = "subscription_start_date")
+    private Instant subscriptionStartDate;
+
+    @Setter
+    @Column(name = "subscription_expires_at")
+    private Instant subscriptionExpiresAt;
+
+    @Setter
+    @Column(name = "subscription_plan", length = 20)
+    private String subscriptionPlan;
+
+    @Setter
+    @Column(name = "user_limit")
+    private Integer userLimit;
+
+    @Setter
+    @Column(name = "menu_item_limit")
+    private Integer menuItemLimit;
+
+    @Setter
+    @Column(name = "monthly_price", precision = 12, scale = 2)
+    private BigDecimal monthlyPrice;
 
     public Business(Owner owner, String name, String nameKm, String slug, BusinessType type, CatalogMode catalogMode) {
         this.owner = owner;

@@ -25,11 +25,17 @@ public class JwtService {
         this.expirationSeconds = expirationSeconds;
     }
 
+    // Backward-compatible overload kept for existing callers (e.g. tests).
     public String generate(UUID ownerId, String email, String name, String role) {
+        return generate(ownerId, email, null, name, role);
+    }
+
+    public String generate(UUID ownerId, String email, String username, String name, String role) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(ownerId.toString())
                 .claim("email", email)
+                .claim("username", username)
                 .claim("name", name)
                 .claim("role", role)
                 .issuedAt(Date.from(now))

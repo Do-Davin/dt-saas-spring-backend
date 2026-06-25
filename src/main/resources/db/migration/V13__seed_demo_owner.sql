@@ -1,6 +1,7 @@
 -- V13: Demo seed — OWNER role account + business for MVP demo.
 -- Owner  email: demo-owner@dt-saas.local  password: demo-password
--- This migration is idempotent (ON CONFLICT DO NOTHING on every insert).
+-- Conflict handling is explicit ON CONFLICT (id) to avoid silent skips when
+-- a different row with the same slug already exists from prior manual testing.
 
 INSERT INTO owners (id, email, password_hash, name, role, created_at, updated_at)
 VALUES (
@@ -12,7 +13,7 @@ VALUES (
     now(),
     now()
 )
-ON CONFLICT DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO businesses (id, owner_id, name, name_km, slug, type, catalog_mode, created_at, updated_at)
 VALUES (
@@ -20,13 +21,13 @@ VALUES (
     'd0000000-0000-0000-0000-000000000001',
     'Demo OWNER Biz',
     NULL,
-    'demo-owner-biz',
+    'demo-owner-biz-2',
     'RESTAURANT',
     'MENU',
     now(),
     now()
 )
-ON CONFLICT DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO categories (id, business_id, branch_id, name, name_km, position, is_active, created_at, updated_at)
 VALUES (
@@ -40,7 +41,7 @@ VALUES (
     now(),
     now()
 )
-ON CONFLICT DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO products (id, business_id, branch_id, category_id, name, name_km, pricing_type, uom, sales_price, is_available, is_visible, created_at, updated_at)
 VALUES (
@@ -58,4 +59,4 @@ VALUES (
     now(),
     now()
 )
-ON CONFLICT DO NOTHING;
+ON CONFLICT (id) DO NOTHING;

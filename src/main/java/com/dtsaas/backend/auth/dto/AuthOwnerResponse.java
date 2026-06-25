@@ -9,6 +9,7 @@ public record AuthOwnerResponse(
         UUID id,
         String email,
         String name,
+        String role,
         Instant createdAt,
         Instant updatedAt) {
 
@@ -17,6 +18,7 @@ public record AuthOwnerResponse(
                 owner.getId(),
                 owner.getEmail(),
                 owner.getName(),
+                owner.getRole(),
                 owner.getCreatedAt(),
                 owner.getUpdatedAt());
     }

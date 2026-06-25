@@ -44,7 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Optional<Owner> owner = ownerRepository.findById(ownerId);
                 owner.ifPresent(o -> {
                     AuthenticatedOwner principal = new AuthenticatedOwner(
-                            o.getId(), o.getEmail(), o.getName());
+                            o.getId(), o.getEmail(), o.getName(), o.getRole());
                     UsernamePasswordAuthenticationToken auth =
                             new UsernamePasswordAuthenticationToken(
                                     principal, null, Collections.emptyList());

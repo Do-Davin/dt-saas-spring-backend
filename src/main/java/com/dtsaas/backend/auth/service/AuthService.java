@@ -28,9 +28,13 @@ public class AuthService {
         if (ownerRepository.existsByEmail(request.email())) {
             throw ApiException.conflict("Email already registered");
         }
+        if (ownerRepository.existsByUsername(request.username())) {
+            throw ApiException.conflict("Username already taken");
+        }
 
         Owner owner = new Owner(
                 request.email(),
+                request.username(),
                 passwordService.hash(request.password()),
                 request.name());
 
@@ -39,7 +43,7 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        Owner owner = ownerRepository.findByEmail(request.email())
+        Owner owner = ownerRepository.findByUsername(request.username())
                 .orElseThrow(() -> ApiException.unauthorized(INVALID_CREDENTIALS));
 
         if (!passwordService.matches(request.password(), owner.getPasswordHash())) {
@@ -50,7 +54,8 @@ public class AuthService {
     }
 
     private AuthResponse toAuthResponse(Owner owner) {
-        String token = jwtService.generate(owner.getId(), owner.getEmail(), owner.getName(), owner.getRole());
+        String token = jwtService.generate(
+                owner.getId(), owner.getEmail(), owner.getUsername(), owner.getName(), owner.getRole());
         return new AuthResponse(AuthOwnerResponse.from(owner), token);
     }
 }

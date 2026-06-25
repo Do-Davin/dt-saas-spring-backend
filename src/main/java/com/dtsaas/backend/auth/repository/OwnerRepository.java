@@ -11,4 +11,8 @@ public interface OwnerRepository extends JpaRepository<Owner, UUID> {
     Optional<Owner> findByEmail(String email);
 
     boolean existsByEmail(String email);
+
+    Optional<Owner> findByUsername(String username);
+
+    boolean existsByUsername(String username);
 }

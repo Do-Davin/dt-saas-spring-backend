@@ -113,6 +113,14 @@ public class Product extends BaseTimeEntity {
     private boolean isVisible = true;
 
     @Setter
+    @Column(name = "stock_quantity", nullable = false)
+    private int stockQuantity = 0;
+
+    @Setter
+    @Column(name = "low_stock_threshold")
+    private Integer lowStockThreshold;
+
+    @Setter
     @Column(name = "deleted_at")
     private Instant deletedAt;
 

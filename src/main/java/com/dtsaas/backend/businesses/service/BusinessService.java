@@ -49,11 +49,25 @@ public class BusinessService {
     }
 
     @Transactional(readOnly = true)
+    public List<BusinessResponse> listAll() {
+        return businessRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(BusinessResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<BusinessResponse> listForOwner(UUID ownerId) {
         return businessRepository.findAllByOwnerIdOrderByCreatedAtDesc(ownerId)
                 .stream()
                 .map(BusinessResponse::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public BusinessResponse getAny(UUID businessId) {
+        return BusinessResponse.from(businessRepository.findById(businessId)
+                .orElseThrow(() -> ApiException.notFound("Business not found")));
     }
 
     @Transactional(readOnly = true)

@@ -2,6 +2,7 @@ package com.dtsaas.backend.products.dto;
 
 import com.dtsaas.backend.products.entity.PricingType;
 import com.dtsaas.backend.products.entity.UnitOfMeasure;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -24,5 +25,7 @@ public record UpdateProductRequest(
         Map<String, Object> toppings,
         Map<String, Object> ingredients,
         Boolean isAvailable,
-        Boolean isVisible) {
+        Boolean isVisible,
+        @Min(0) Integer stockQuantity,
+        @Min(0) Integer lowStockThreshold) {
 }

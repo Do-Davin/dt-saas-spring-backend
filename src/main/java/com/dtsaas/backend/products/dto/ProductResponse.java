@@ -28,6 +28,8 @@ public record ProductResponse(
         Map<String, Object> ingredients,
         boolean isAvailable,
         boolean isVisible,
+        int stockQuantity,
+        Integer lowStockThreshold,
         Instant createdAt,
         Instant updatedAt,
         ProductPrimaryImageResponse primaryImage) {
@@ -52,6 +54,8 @@ public record ProductResponse(
                 product.getIngredients(),
                 product.isAvailable(),
                 product.isVisible(),
+                product.getStockQuantity(),
+                product.getLowStockThreshold(),
                 product.getCreatedAt(),
                 product.getUpdatedAt(),
                 primaryImage);

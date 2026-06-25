@@ -16,4 +16,6 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
     Optional<Business> findByIdAndOwnerId(UUID id, UUID ownerId);
 
     List<Business> findAllByOwnerIdOrderByCreatedAtDesc(UUID ownerId);
+
+    List<Business> findAllByOrderByCreatedAtDesc();
 }
